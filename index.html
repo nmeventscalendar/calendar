@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar 2025</title>
     <style>
-        /* Seus estilos existentes */
+        /* Existing styles */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -71,7 +71,9 @@
             background-color: orange;
         }
 
-        /* Removed the multiple-events::after to eliminate the "2 Events" floating info */
+        .days div.multiple-events {
+            background-color: orange; /* Same color as single events */
+        }
 
         /* Modal Styles */
         #modal {
@@ -282,7 +284,8 @@
                     dayDiv.classList.add('event');
                 } else if (eventsForThisDay.length > 1) {
                     dayDiv.classList.add('multiple-events');
-                    dayDiv.setAttribute('data-count', eventsForThisDay.length);
+                    // Optionally, you can keep the data-count attribute if needed
+                    // dayDiv.setAttribute('data-count', eventsForThisDay.length);
                 }
 
                 dayDiv.onclick = () => {
@@ -300,7 +303,10 @@
     }
 
     function closeModal() {
-        document.getElementById("modal").style.display = 'none';
+        const modal = document.getElementById("modal");
+        if (modal) {
+            modal.style.display = 'none';
+        }
         document.getElementById("modal-title").textContent = "Add/Edit Event";
         document.getElementById("form-title").textContent = "Add New Event";
         document.getElementById("event").value = '';
