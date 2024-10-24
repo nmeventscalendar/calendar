@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,17 +71,7 @@
             background-color: orange;
         }
 
-        .days div.multiple-events::after {
-            content: attr(data-count) " Events";
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-size: 10px;
-        }
+        /* Removed the multiple-events::after to eliminate the "2 Events" floating info */
 
         /* Modal Styles */
         #modal {
@@ -182,9 +172,9 @@
 </div>
 
 <script>
-    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; // Substitua pelo seu API Key
-    const BASE_ID = 'appQyrlfslEfiTHya'; // Substitua pelo seu Base ID
-    const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Substitua pelo seu Table Name
+    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; // Replace with your API Key
+    const BASE_ID = 'appQyrlfslEfiTHya'; // Replace with your Base ID
+    const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Replace with your Table Name
 
     let currentEventId = null;
     let selectedMonth = 0; // January (0)
@@ -318,7 +308,11 @@
         document.getElementById("modal-time").value = '';
         document.getElementById("modal-required-actions").value = '';
         document.getElementById("modal-attendees").value = '';
-        document.getElementById("add-event-section").style.display = 'none';
+        
+        const addEventSection = document.getElementById("add-event-section");
+        if (addEventSection) {
+            addEventSection.style.display = 'none';
+        }
     }
 
     async function openModal() {
