@@ -120,7 +120,7 @@
 <div id="modal">
     <div class="modal-content">
         <h2 id="modal-title">Adicionar/Editar Evento</h2>
-        <input type="text" id="event-name" placeholder="Nome do Evento" required>
+        <input type="text" id="event" placeholder="Evento" required>
         <input type="text" id="modal-location" placeholder="Localização" required>
         <input type="text" id="modal-time" placeholder="Hora" required>
         <input type="text" id="modal-required-actions" placeholder="Ações Necessárias">
@@ -132,7 +132,7 @@
 </div>
 
 <script>
-    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; // Substitua pelo seu API Key
+    const API_KEY = 'SEU_API_KEY_AQUI'; // Substitua pelo seu API Key
     const BASE_ID = 'appQyrlfslEfiTHya'; // Substitua pelo seu Base ID
     const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Substitua pelo seu Table Name
 
@@ -179,11 +179,11 @@
                 const date = new Date(record.fields.Date);
                 return {
                     id: record.id,
-                    title: record.fields["Event Name"],               // Atualizado para "Event Name"
-                    location: record.fields["Location"],              // Atualizado para "Location"
-                    time: record.fields["Time"],                      // Atualizado para "Time"
+                    title: record.fields["Event"],               // Atualizado para "Event"
+                    location: record.fields["Location"],         // Atualizado para "Location"
+                    time: record.fields["Time"],                 // Atualizado para "Time"
                     requiredActions: record.fields["Required Actions"], // Atualizado para "Required Actions"
-                    attendees: record.fields["Attendees"],            // Atualizado para "Attendees"
+                    attendees: record.fields["Attendees"],       // Atualizado para "Attendees"
                     date: date,
                     day: date.getDate(),
                     month: date.getMonth() // 0-11 para janeiro-dezembro
@@ -240,7 +240,7 @@
                     dayDiv.onclick = () => {
                         currentEventId = event.id; // Armazena o ID do evento atual
                         document.getElementById("modal-title").textContent = "Editar Evento";
-                        document.getElementById("event-name").value = event.title;
+                        document.getElementById("event").value = event.title;
                         document.getElementById("modal-location").value = event.location;
                         document.getElementById("modal-time").value = event.time;
                         document.getElementById("modal-required-actions").value = event.requiredActions || '';
@@ -253,7 +253,7 @@
                     dayDiv.onclick = () => {
                         currentEventId = null; // Reset para novo evento
                         document.getElementById("modal-title").textContent = "Adicionar Evento";
-                        document.getElementById("event-name").value = '';
+                        document.getElementById("event").value = '';
                         document.getElementById("modal-location").value = '';
                         document.getElementById("modal-time").value = '';
                         document.getElementById("modal-required-actions").value = '';
@@ -277,7 +277,7 @@
     }
 
     async function saveEvent() {
-        const eventName = document.getElementById("event-name").value.trim();
+        const eventName = document.getElementById("event").value.trim();
         const location = document.getElementById("modal-location").value.trim();
         const time = document.getElementById("modal-time").value.trim();
         const requiredActions = document.getElementById("modal-required-actions").value.trim();
@@ -288,7 +288,7 @@
 
         // Validação dos campos obrigatórios
         if (!eventName || !location || !time) { // Adicione outros campos obrigatórios aqui
-            alert('Por favor, preencha os campos obrigatórios (Nome do Evento, Localização e Hora).');
+            alert('Por favor, preencha os campos obrigatórios (Evento, Localização e Hora).');
             return;
         }
 
@@ -298,10 +298,10 @@
 
         const eventData = {
             fields: {
-                "Event Name": eventName,                   // Atualizado para "Event Name"
+                "Event": eventName,                         // Atualizado para "Event"
                 "Location": location,
                 "Time": time,
-                "Required Actions": requiredActions,       // Atualizado para "Required Actions"
+                "Required Actions": requiredActions,         // Atualizado para "Required Actions"
                 "Attendees": attendees,
                 "Date": eventDate
                 // Adicione outros campos obrigatórios aqui, se houver
@@ -410,4 +410,3 @@
 
 </body>
 </html>
-
