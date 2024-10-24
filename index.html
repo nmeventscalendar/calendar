@@ -68,7 +68,7 @@
         }
 
         /* Modal Styles */
-        #modal, #add-event-modal {
+        #modal {
             display: none;
             position: fixed;
             top: 0;
@@ -111,46 +111,28 @@
 
 <div id="calendar"></div>
 
-<!-- Modal Structure for Viewing Event -->
+<!-- Modal Structure -->
 <div id="modal">
     <div class="modal-content">
         <h2 id="modal-title"></h2>
         <p id="modal-location"></p>
-        <p id="modal-date"></p>
+        <input type="text" id="modal-time" placeholder="Time">
+        <input type="text" id="modal-required-actions" placeholder="Required Actions">
+        <input type="text" id="modal-attendees" placeholder="Attendees">
+        <input type="text" id="modal-date-start" placeholder="Start Date (MM/DD/YYYY)">
+        <input type="text" id="modal-date-end" placeholder="End Date (MM/DD/YYYY)">
+        <button id="edit-btn" onclick="editEvent()">Edit</button>
+        <button id="add-btn" onclick="addEvent()">Add Event</button>
         <button class="close" onclick="closeModal()">Close</button>
-        <button onclick="openEditEventModal()">Edit</button>
-    </div>
-</div>
-
-<!-- Modal for Adding Event -->
-<div id="add-event-modal">
-    <div class="modal-content">
-        <h2>Add New Event</h2>
-        <label for="event-title">Event Title:</label>
-        <input type="text" id="event-title" required>
-        <br>
-        <label for="event-location">Location:</label>
-        <input type="text" id="event-location" required>
-        <br>
-        <label for="event-start-date">Start Date (mm/dd/yyyy):</label>
-        <input type="text" id="event-start-date" required>
-        <br>
-        <label for="event-end-date">End Date (mm/dd/yyyy):</label>
-        <input type="text" id="event-end-date" required>
-        <br>
-        <button onclick="addEvent()">Add Event</button>
-        <button class="close" onclick="closeAddEventModal()">Close</button>
     </div>
 </div>
 
 <script>
-    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; 
-    const BASE_ID = 'appQyrlfslEfiTHya'; 
-    const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR';
-    
-    let events = [];
+    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; // Substitua pelo seu API Key
+    const BASE_ID = 'appQyrlfslEfiTHya'; // Substitua pelo seu Base ID
+    const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Substitua pelo seu Table Name
+
     let currentEventId = null;
-    let currentEventElement = null; // Element of the day clicked
 
     async function fetchEvents() {
         try {
@@ -163,13 +145,15 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            console.log('Fetched events:', data.records);
             return data.records.map(record => {
                 const date = new Date(record.fields.Date);
                 return {
-                    id: record.id, // Add event ID for editing
-                    title: record.fields.Event, 
+                    id: record.id,
+                    title: record.fields.Event,
                     location: record.fields.Location,
+                    time: record.fields.Time,
+                    requiredActions: record.fields.Required_Actions,
+                    attendees: record.fields.Attendees,
                     date: date,
                     day: date.getDate(),
                     month: date.getMonth() // 0-11 format for month
@@ -181,86 +165,26 @@
         }
     }
 
-    async function addEvent() {
-        const title = document.getElementById('event-title').value;
-        const location = document.getElementById('event-location').value;
-        const startDate = new Date(document.getElementById('event-start-date').value);
-        const endDate = new Date(document.getElementById('event-end-date').value);
+    const months = [
+        { name: "January", days: 31, startDay: 4 },
+        { name: "February", days: 28, startDay: 7 },
+        { name: "March", days: 31, startDay: 7 },
+        { name: "April", days: 30, startDay: 3 },
+        { name: "May", days: 31, startDay: 5 },
+        { name: "June", days: 30, startDay: 1 },
+        { name: "July", days: 31, startDay: 3 },
+        { name: "August", days: 31, startDay: 6 },
+        { name: "September", days: 30, startDay: 2 },
+        { name: "October", days: 31, startDay: 4 },
+        { name: "November", days: 30, startDay: 7 },
+        { name: "December", days: 31, startDay: 2 }
+    ];
 
-        const dateArray = [];
-
-        // Create an array of dates between start and end date
-        for (let dt = startDate; dt <= endDate; dt.setDate(dt.getDate() + 1)) {
-            dateArray.push(new Date(dt));
-        }
-
-        // Send each date to Airtable
-        for (const date of dateArray) {
-            const formattedDate = date.toISOString().split('T')[0]; // Format date to yyyy-mm-dd
-
-            try {
-                const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${API_KEY}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        fields: {
-                            Event: title,
-                            Location: location,
-                            Date: formattedDate,
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Error adding event:', error);
-            }
-        }
-
-        closeAddEventModal();
-        events = await fetchEvents(); // Refresh the events
-        createCalendar(); // Recreate the calendar with updated events
-    }
-
-    async function updateEvent() {
-        const title = document.getElementById('edit-event-title').value;
-        const location = document.getElementById('edit-event-location').value;
-        
-        try {
-            const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}/${currentEventId}`, {
-                method: 'PATCH',
-                headers: {
-                    Authorization: `Bearer ${API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    fields: {
-                        Event: title,
-                        Location: location
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            closeEditEventModal();
-            events = await fetchEvents(); // Refresh the events
-            createCalendar(); // Recreate the calendar with updated events
-        } catch (error) {
-            console.error('Error updating event:', error);
-        }
-    }
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     async function createCalendar() {
+        const events = await fetchEvents();
         const calendar = document.getElementById("calendar");
-        calendar.innerHTML = ""; // Clear existing calendar
 
         months.forEach((month) => {
             const monthDiv = document.createElement('div');
@@ -292,60 +216,125 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.textContent = day;
 
-                const event = events.find(e => e.day === day && e.month === month.index);
+                const event = events.find(e => e.day === day && e.month === months.indexOf(month));
                 if (event) {
                     dayDiv.classList.add('event');
-                    dayDiv.onclick = (e) => {
-                        currentEventId = event.id; // Store current event ID
-                        currentEventElement = e.target; // Store the current day element
+                    dayDiv.onclick = () => {
+                        currentEventId = event.id; // Armazena o ID do evento atual
                         document.getElementById("modal-title").textContent = event.title;
-                        document.getElementById("modal-location").textContent = event.location;
-                        document.getElementById("modal-date").textContent = event.date.toISOString().split('T')[0];
-                        document.getElementById("modal").style.display = 'flex'; // Show modal
+                        document.getElementById("modal-location").textContent = `Location: ${event.location}`;
+                        document.getElementById("modal-time").value = event.time || '';
+                        document.getElementById("modal-required-actions").value = event.requiredActions || '';
+                        document.getElementById("modal-attendees").value = event.attendees || '';
+                        document.getElementById("modal-date-start").value = formatDate(event.date);
+                        document.getElementById("modal-date-end").value = formatDate(event.date);
+                        document.getElementById("modal").style.display = 'flex'; 
                     };
                 }
 
                 daysDiv.appendChild(dayDiv);
             }
+
             monthDiv.appendChild(daysDiv);
             calendar.appendChild(monthDiv);
         });
     }
 
-    function openAddEventModal() {
-        document.getElementById('add-event-modal').style.display = 'flex';
-    }
-
-    function closeAddEventModal() {
-        document.getElementById('add-event-modal').style.display = 'none';
-        document.getElementById('event-title').value = '';
-        document.getElementById('event-location').value = '';
-        document.getElementById('event-start-date').value = '';
-        document.getElementById('event-end-date').value = '';
-    }
-
-    function openEditEventModal() {
-        const event = events.find(e => e.id === currentEventId);
-        document.getElementById('edit-event-title').value = event.title;
-        document.getElementById('edit-event-location').value = event.location;
-        document.getElementById('modal').style.display = 'none'; // Close the view modal
-        document.getElementById('edit-event-modal').style.display = 'flex'; // Open edit modal
-    }
-
-    function closeEditEventModal() {
-        document.getElementById('edit-event-modal').style.display = 'none'; // Close the edit modal
+    function formatDate(date) {
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Mês começa em 0
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
     }
 
     function closeModal() {
-        document.getElementById('modal').style.display = 'none';
+        if (currentEventId) {
+            editEvent(); // Salva as alterações se um evento estiver sendo editado
+        }
+        document.getElementById("modal").style.display = 'none'; 
     }
 
-    async function init() {
-        events = await fetchEvents();
-        createCalendar();
+    async function editEvent() {
+        if (!currentEventId) return;
+
+        const title = document.getElementById("modal-title").textContent;
+        const location = document.getElementById("modal-location").textContent.replace("Location: ", "");
+        const time = document.getElementById("modal-time").value;
+        const requiredActions = document.getElementById("modal-required-actions").value;
+        const attendees = document.getElementById("modal-attendees").value;
+
+        try {
+            const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}/${currentEventId}`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fields: {
+                        Event: title,
+                        Location: location,
+                        Time: time,
+                        Required_Actions: requiredActions,
+                        Attendees: attendees
+                    }
+                })
+            });
+            if (!response.ok) {
+                throw new Error(`Error updating event: ${response.statusText}`);
+            }
+            currentEventId = null; // Limpa o ID do evento atual
+            createCalendar(); // Recria o calendário para refletir as mudanças
+        } catch (error) {
+            console.error('Error editing event:', error);
+        }
     }
 
-    init();
+    async function addEvent() {
+        const title = document.getElementById("modal-title").textContent;
+        const location = document.getElementById("modal-location").textContent.replace("Location: ", "");
+        const startDate = document.getElementById("modal-date-start").value;
+        const endDate = document.getElementById("modal-date-end").value;
+        const time = document.getElementById("modal-time").value;
+        const requiredActions = document.getElementById("modal-required-actions").value;
+        const attendees = document.getElementById("modal-attendees").value;
+
+        const recordsToAdd = [];
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+
+        for (let d = startDateObj; d <= endDateObj; d.setDate(d.getDate() + 1)) {
+            recordsToAdd.push({
+                fields: {
+                    Event: title,
+                    Location: location,
+                    Time: time,
+                    Required_Actions: requiredActions,
+                    Attendees: attendees,
+                    Date: d.toISOString().split('T')[0] // Formato YYYY-MM-DD
+                }
+            });
+        }
+
+        try {
+            for (const record of recordsToAdd) {
+                await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(record)
+                });
+            }
+            closeModal();
+            createCalendar(); // Recria o calendário para refletir as mudanças
+        } catch (error) {
+            console.error('Error adding event:', error);
+        }
+    }
+
+    createCalendar(); // Inicializa o calendário
 </script>
 </body>
 </html>
