@@ -138,7 +138,7 @@
         const data = await response.json();
         console.log('Fetched events:', data.records);
         return data.records.map(record => ({
-            title: record.fields.Title,  // Altere conforme o nome do campo em sua tabela
+            title: record.fields.Event,  // Altere conforme o nome do campo em sua tabela
             location: record.fields.Location, // Altere conforme o nome do campo em sua tabela
             date: new Date(record.fields.Date) // Altere conforme o nome do campo em sua tabela
         }));
