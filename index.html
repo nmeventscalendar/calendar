@@ -87,12 +87,12 @@
             border-radius: 5px;
             width: 90%;
             max-width: 400px;
-            text-align: left;
+            text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
 
-        .close, .action-btn {
-            background-color: #f44336;
+        .close, .save, .add {
+            background-color: #4CAF50;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -102,21 +102,14 @@
             width: 100%;
         }
 
-        .close:hover, .action-btn:hover {
-            background-color: #d32f2f;
+        .close:hover, .save:hover, .add:hover {
+            background-color: #45a049;
         }
 
         label {
             display: block;
-            margin: 10px 0 5px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            margin-top: 10px;
+            text-align: left;
         }
     </style>
 </head>
@@ -129,26 +122,21 @@
 <!-- Modal Structure -->
 <div id="modal">
     <div class="modal-content">
-        <h2 id="modal-title"></h2>
-        <p id="modal-location"></p>
-        
+        <h2 id="modal-title">Add/Edit Event</h2>
+        <label for="modal-location">Location:</label>
+        <input type="text" id="modal-location" placeholder="Enter location">
         <label for="modal-time">Time:</label>
-        <input type="text" id="modal-time" placeholder="Enter Time (HH:MM)">
-
+        <input type="text" id="modal-time" placeholder="Enter time">
         <label for="modal-required-actions">Required Actions:</label>
-        <input type="text" id="modal-required-actions" placeholder="Enter Required Actions">
-
+        <input type="text" id="modal-required-actions" placeholder="Enter required actions">
         <label for="modal-attendees">Attendees:</label>
-        <input type="text" id="modal-attendees" placeholder="Enter Attendees">
-
+        <input type="text" id="modal-attendees" placeholder="Enter attendees">
         <label for="modal-date-start">Start Date:</label>
-        <input type="text" id="modal-date-start" placeholder="Start Date (MM/DD/YYYY)">
-        
+        <input type="text" id="modal-date-start" placeholder="MM/DD/YYYY">
         <label for="modal-date-end">End Date:</label>
-        <input type="text" id="modal-date-end" placeholder="End Date (MM/DD/YYYY)">
-        
-        <button id="edit-btn" class="action-btn" onclick="editEvent()">Edit</button>
-        <button id="add-btn" class="action-btn" onclick="addEvent()">Add Event</button>
+        <input type="text" id="modal-date-end" placeholder="MM/DD/YYYY">
+        <button class="add" onclick="addEvent()">Add Event</button>
+        <button class="save" onclick="editEvent()">Save Changes</button>
         <button class="close" onclick="closeModal()">Close</button>
     </div>
 </div>
@@ -211,7 +199,7 @@
     async function createCalendar() {
         const events = await fetchEvents();
         const calendar = document.getElementById("calendar");
-        calendar.innerHTML = ''; // Limpa o calendário existente
+        calendar.innerHTML = ""; // Limpa o calendário antes de recriar
 
         months.forEach((month) => {
             const monthDiv = document.createElement('div');
@@ -243,31 +231,30 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.textContent = day;
 
-                // Adiciona evento de clique para adicionar evento
-                dayDiv.onclick = () => {
-                    currentEventId = null; // Limpa o ID do evento atual para adicionar um novo
-                    document.getElementById("modal-title").textContent = "Add New Event";
-                    document.getElementById("modal-location").textContent = ""; // Limpa a localização
-                    document.getElementById("modal-time").value = "";
-                    document.getElementById("modal-required-actions").value = "";
-                    document.getElementById("modal-attendees").value = "";
-                    document.getElementById("modal-date-start").value = formatDate(new Date(year, month.index, day)); // Set the start date
-                    document.getElementById("modal-date-end").value = formatDate(new Date(year, month.index, day)); // Set the end date
-                    document.getElementById("modal").style.display = 'flex'; 
-                };
-
-                const event = events.find(e => e.day === day && e.month === months.indexOf(month                ));
+                const event = events.find(e => e.day === day && e.month === months.indexOf(month));
                 if (event) {
                     dayDiv.classList.add('event');
                     dayDiv.onclick = () => {
-                        currentEventId = event.id; // Armazena o ID do evento para edição
+                        currentEventId = event.id; // Armazena o ID do evento atual
                         document.getElementById("modal-title").textContent = "Edit Event";
-                        document.getElementById("modal-location").textContent = event.location; 
+                        document.getElementById("modal-location").value = event.location; 
                         document.getElementById("modal-time").value = event.time || ""; 
                         document.getElementById("modal-required-actions").value = event.requiredActions || ""; 
                         document.getElementById("modal-attendees").value = event.attendees || ""; 
                         document.getElementById("modal-date-start").value = formatDate(event.date); 
                         document.getElementById("modal-date-end").value = formatDate(event.date); 
+                        document.getElementById("modal").style.display = 'flex'; 
+                    };
+                } else {
+                    dayDiv.onclick = () => {
+                        currentEventId = null; // Se não houver evento, reseta o ID
+                        document.getElementById("modal-title").textContent = "Add Event";
+                        document.getElementById("modal-location").value = ""; 
+                        document.getElementById("modal-time").value = ""; 
+                        document.getElementById("modal-required-actions").value = ""; 
+                        document.getElementById("modal-attendees").value = ""; 
+                        document.getElementById("modal-date-start").value = formatDate(new Date(year, months.indexOf(month), day)); 
+                        document.getElementById("modal-date-end").value = formatDate(new Date(year, months.indexOf(month), day)); 
                         document.getElementById("modal").style.display = 'flex'; 
                     };
                 }
@@ -293,8 +280,8 @@
 
         const updatedData = {
             fields: {
-                Event: document.getElementById("modal-title").textContent,
-                Location: document.getElementById("modal-location").textContent,
+                Event: document.getElementById("modal-title").textContent === "Edit Event" ? document.getElementById("modal-title").textContent : "New Event",
+                Location: document.getElementById("modal-location").value,
                 Time: document.getElementById("modal-time").value,
                 Required_Actions: document.getElementById("modal-required-actions").value,
                 Attendees: document.getElementById("modal-attendees").value,
@@ -331,8 +318,8 @@
         for (let d = startDate; d <= endDate; d.setDate(d.getDate() + 1)) {
             const newEvent = {
                 fields: {
-                    Event: document.getElementById("modal-title").textContent,
-                    Location: document.getElementById("modal-location").textContent,
+                    Event: document.getElementById("modal-title").textContent === "Add Event" ? "New Event" : document.getElementById("modal-title").textContent,
+                    Location: document.getElementById("modal-location").value,
                     Time: document.getElementById("modal-time").value,
                     Required_Actions: document.getElementById("modal-required-actions").value,
                     Attendees: document.getElementById("modal-attendees").value,
