@@ -137,7 +137,7 @@
             }
             const data = await response.json();
             return data.records.map(record => ({
-                title: record.fields.Title,
+                title: record.fields.Event,
                 location: record.fields.Location,
                 date: new Date(record.fields.Date) // Converter para objeto Date
             }));
@@ -204,7 +204,7 @@
                     dayDiv.onclick = () => {
                         document.getElementById("modal-title").textContent = event.title;
                         document.getElementById("modal-location").textContent = `Location: ${event.location}`;
-                        document.getElementById("modal").style.display = 'flex'; // Exibe o modal
+                        document.getElementById("modal").style.display = 'flex'; 
                     };
                 }
 
@@ -217,7 +217,7 @@
     }
 
     function closeModal() {
-        document.getElementById("modal").style.display = 'none'; // Esconde o modal
+        document.getElementById("modal").style.display = 'none'; 
     }
 
     document.addEventListener('click', (event) => {
