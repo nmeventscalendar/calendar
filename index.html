@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendário 2025</title>
     <style>
+        /* Seus estilos existentes */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -124,13 +125,14 @@
         <input type="text" id="modal-time" placeholder="Hora" required>
         <input type="text" id="modal-required-actions" placeholder="Ações Necessárias">
         <input type="text" id="modal-attendees" placeholder="Participantes">
+        <!-- Adicione outros campos obrigatórios aqui, se houver -->
         <button class="save" onclick="saveEvent()">Salvar</button>
         <button class="close" onclick="closeModal()">Fechar</button>
     </div>
 </div>
 
 <script>
-    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; // Substitua pelo seu API Key
+    const API_KEY = 'SEU_API_KEY_AQUI'; // Substitua pelo seu API Key
     const BASE_ID = 'appQyrlfslEfiTHya'; // Substitua pelo seu Base ID
     const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Substitua pelo seu Table Name
 
@@ -281,6 +283,7 @@
         const requiredActions = document.getElementById("modal-required-actions").value.trim();
         const attendees = document.getElementById("modal-attendees").value.trim();
 
+        // Validação dos campos obrigatórios
         if (!eventName || !location || !time) {
             alert('Por favor, preencha os campos obrigatórios (Nome do Evento, Localização e Hora).');
             return;
@@ -297,6 +300,7 @@
                 Required_Actions: requiredActions,
                 Attendees: attendees,
                 Date: eventDate
+                // Adicione outros campos obrigatórios aqui, se houver
             }
         };
 
@@ -324,9 +328,13 @@
                 body: JSON.stringify(event)
             });
             if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Erro ao adicionar evento:', errorData);
+                alert(`Erro ao adicionar o evento: ${JSON.stringify(errorData.errors)}`);
                 throw new Error(`Erro HTTP! status: ${response.status}`);
             }
-            console.log('Evento adicionado:', await response.json());
+            const responseData = await response.json();
+            console.log('Evento adicionado:', responseData);
             alert('Evento adicionado com sucesso!');
         } catch (error) {
             console.error('Erro ao adicionar evento:', error);
@@ -346,9 +354,13 @@
                 body: JSON.stringify({ fields })
             });
             if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Erro ao atualizar evento:', errorData);
+                alert(`Erro ao atualizar o evento: ${JSON.stringify(errorData.errors)}`);
                 throw new Error(`Erro HTTP! status: ${response.status}`);
             }
-            console.log('Evento atualizado:', await response.json());
+            const responseData = await response.json();
+            console.log('Evento atualizado:', responseData);
             alert('Evento atualizado com sucesso!');
         } catch (error) {
             console.error('Erro ao atualizar evento:', error);
