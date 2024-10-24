@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar 2025</title>
+    <title>Calendar 2025 with Airtable</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
 
         #calendar {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Ajuste responsivo */
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
             gap: 20px;
             margin: 20px 0;
         }
@@ -72,7 +72,6 @@
             cursor: pointer;
         }
 
-        /* Modal Styles */
         #modal {
             display: none;
             position: fixed;
@@ -90,13 +89,14 @@
             background-color: #fff;
             padding: 20px;
             border-radius: 5px;
-            width: 90%; /* Ajustado para ser responsivo */
-            max-width: 400px; /* Largura máxima para dispositivos maiores */
+            width: 90%;
+            max-width: 400px;
             text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
 
-        .close {
+        .close, .edit {
+            margin-top: 10px;
             background-color: #f44336;
             color: white;
             border: none;
@@ -105,19 +105,18 @@
             cursor: pointer;
         }
 
-        .close:hover {
+        .close:hover, .edit:hover {
             background-color: #d32f2f;
         }
 
-        /* Media Queries para Responsividade */
         @media (max-width: 600px) {
             .days div {
-                font-size: 8px; /* Tamanho da fonte reduzido para dispositivos móveis */
-                padding: 6px; /* Reduzindo o padding */
+                font-size: 8px;
+                padding: 6px;
             }
 
             .modal-content {
-                padding: 15px; /* Padding menor na modal para celulares */
+                padding: 15px;
             }
         }
     </style>
@@ -128,83 +127,72 @@
 
 <div id="calendar"></div>
 
-<!-- Modal Structure -->
 <div id="modal">
     <div class="modal-content">
         <h2 id="modal-title"></h2>
         <p id="modal-location"></p>
         <p id="modal-time"></p>
+        <button class="edit" onclick="editEvent()">Edit</button>
         <button class="close" onclick="closeModal()">Close</button>
     </div>
 </div>
 
 <script>
-    const events = {
-            "January": {
-                6: { title: "Vegas Meetup", location: "Las Vegas" },
-                7: { title: "Vegas Meetup", location: "Las Vegas" },
-                8: { title: "Vegas Meetup", location: "Las Vegas" },
-                8: { title: "Vegas Meetup", location: "Las Vegas" },
+    async function fetchEventsFromAirtable() {
+        const apiKey = 'patzfY1S6ZsT718hP';
+        const baseId = 'appQyrlfslEfiTHya/tbl0jqeLM1Jj8b2IR/viwB2k06E9upUs3cu';
+        const tableName = 'Eventos';
+
+        const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableName}`, {
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
             },
-            "April": {
-                7: { title: "Vegas Meetup", location: "Las Vegas" },
-                8: { title: "Vegas Meetup", location: "Las Vegas" },
-                9: { title: "Vegas Meetup", location: "Las Vegas" },
-                10: { title: "Vegas Meetup", location: "Las Vegas"},
-            },
-            "June": {
-                14: { title: "LA Meetup", location: "Los Angeles" },
-                15: { title: "LA Meetup", location: "Los Angeles" },
-                16: { title: "LA Meetup", location: "Los Angeles" },
-                17: { title: "LA Meetup", location: "Los Angeles" },
-                23: { title: "On Location Trip for Hustlers/Earnings" },
-                24: { title: "On Location Trip for Hustlers/Earnings" },
-                25: { title: "On Location Trip for Hustlers/Earnings" },
-                26: { title: "On Location Trip for Hustlers/Earnings" },
-            },
-            "September": {
-                29: { title: "Vegas Meetup", location: "Las Vegas" },
-                30: { title: "Vegas Meetup", location: "Las Vegas" },
-            },
-            "October": {
-                1: { title: "Vegas Meetup", location: "Las Vegas" },
-                2: { title: "Vegas Meetup", location: "Las Vegas" },
-                13: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-                14: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-                15: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-                16: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-                17: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-                18: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-                19: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-                20: { title: "Vegas VIP/Netty", location: "Las Vegas" },
-            },
-            "December": {
-                9: { title: "Christmas", location: "Elly and Rick's" },
+        });
+
+        const data = await response.json();
+        const events = {};
+
+        data.records.forEach(record => {
+            const { month, day, title, location, time } = record.fields;
+            if (!events[month]) {
+                events[month] = {};
             }
-        };
+            events[month][day] = {
+                id: record.id,
+                title,
+                location,
+                time
+            };
+        });
+
+        return events;
+    }
         const months = [
-            { name: "January", days: 31, startDay: 4 },
-            { name: "February", days: 28, startDay: 7 },
-            { name: "March", days: 31, startDay: 7 },
-            { name: "April", days: 30, startDay: 3 },
-            { name: "May", days: 31, startDay: 5 },
-            { name: "June", days: 30, startDay: 1 },
-            { name: "July", days: 31, startDay: 3 },
-            { name: "August", days: 31, startDay: 6 },
-            { name: "September", days: 30, startDay: 2 },
-            { name: "October", days: 31, startDay: 4 },
-            { name: "November", days: 30, startDay: 7 },
-            { name: "December", days: 31, startDay: 2 }
-        ];
+        { name: "January", days: 31, startDay: 4 },
+        { name: "February", days: 28, startDay: 7 },
+        { name: "March", days: 31, startDay: 7 },
+        { name: "April", days: 30, startDay: 3 },
+        { name: "May", days: 31, startDay: 5 },
+        { name: "June", days: 30, startDay: 1 },
+        { name: "July", days: 31, startDay: 3 },
+        { name: "August", days: 31, startDay: 6 },
+        { name: "September", days: 30, startDay: 2 },
+        { name: "October", days: 31, startDay: 4 },
+        { name: "November", days: 30, startDay: 7 },
+        { name: "December", days: 31, startDay: 2 }
+    ];
 
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    function createCalendar() {
+    async function createCalendar() {
         const calendar = document.getElementById("calendar");
         const modal = document.getElementById("modal");
         const modalTitle = document.getElementById("modal-title");
         const modalLocation = document.getElementById("modal-location");
         const modalTime = document.getElementById("modal-time");
+
+        // Carrega os eventos do Airtable
+        const events = await fetchEventsFromAirtable();
 
         months.forEach((month) => {
             const monthDiv = document.createElement('div');
@@ -240,10 +228,12 @@
                 if (events[month.name] && events[month.name][day]) {
                     dayDiv.classList.add('event');
                     dayDiv.onclick = () => {
-                        modalTitle.textContent = events[month.name][day].title;
-                        modalLocation.textContent = `Location: ${events[month.name][day].location}`;
-                        modalTime.textContent = `Time: ${events[month.name][day].time}`;
-                        modal.style.display = 'flex'; // Exibe o modal
+                        const event = events[month.name][day];
+                        modalTitle.textContent = event.title;
+                        modalLocation.textContent = `Location: ${event.location}`;
+                        modalTime.textContent = `Time: ${event.time}`;
+                        modal.setAttribute('data-event-id', event.id); // Armazena o ID do evento para edições
+                        modal.style.display = 'flex';
                     };
                 }
 
@@ -254,21 +244,66 @@
             calendar.appendChild(monthDiv);
         });
     }
-
-    function closeModal() {
+        function closeModal() {
         const modal = document.getElementById("modal");
-        modal.style.display = 'none'; // Esconde o modal
+        modal.style.display = 'none';
     }
 
-    document.addEventListener('click', (event) => {
+    function editEvent() {
         const modal = document.getElementById("modal");
-        if (modal.style.display === 'flex' && !modal.contains(event.target) && !event.target.closest('.event')) {
-            closeModal(); // Fecha o modal ao clicar fora
-        }
-    });
+        const modalTitle = document.getElementById("modal-title");
+        const modalLocation = document.getElementById("modal-location");
+        const modalTime = document.getElementById("modal-time");
 
-    createCalendar();
+        // Torna os campos editáveis
+        modalTitle.contentEditable = true;
+        modalLocation.contentEditable = true;
+        modalTime.contentEditable = true;
+
+        // Adiciona um botão para salvar as edições
+        const saveButton = document.createElement('button');
+        saveButton.textContent = "Save";
+        saveButton.classList.add('edit');
+        saveButton.onclick = saveEvent;
+        modal.appendChild(saveButton);
+    }
+
+    async function saveEvent() {
+        const modal = document.getElementById("modal");
+        const eventId = modal.getAttribute('data-event-id');
+        const modalTitle = document.getElementById("modal-title").textContent;
+        const modalLocation = document.getElementById("modal-location").textContent;
+        const modalTime = document.getElementById("modal-time").textContent;
+
+        const apiKey = 'sua_chave_api_aqui';
+        const baseId = 'sua_base_id_aqui';
+        const tableName = 'Eventos';
+
+        // Atualiza o evento no Airtable
+        await fetch(`https://api.airtable.com/v0/${baseId}/${tableName}/${eventId}`, {
+            method: 'PATCH',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fields: {
+                    title: modalTitle,
+                    location: modalLocation.replace('Location: ', ''),
+                    time: modalTime.replace('Time: ', '')
+                }
+            })
+        });
+
+        // Fecha o modal após salvar
+        closeModal();
+    }
+
+    // Inicia o calendário ao carregar a página
+    window.onload = createCalendar;
 </script>
 
 </body>
 </html>
+
+
