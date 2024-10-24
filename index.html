@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendário 2025</title>
+    <title>Calendar 2025</title>
     <style>
         /* Seus estilos existentes */
         body {
@@ -96,7 +96,7 @@
         }
 
         .close, .save {
-            background-color: #4CAF50; /* Verde */
+            background-color: #4CAF50; /* Green */
             color: white;
             border: none;
             padding: 10px 20px;
@@ -112,57 +112,56 @@
 </head>
 <body>
 
-<h1>Calendário 2025</h1>
+<h1>Calendar 2025</h1>
 
 <div id="calendar"></div>
 
-<!-- Estrutura do Modal -->
+<!-- Modal Structure -->
 <div id="modal">
     <div class="modal-content">
-        <h2 id="modal-title">Adicionar/Editar Evento</h2>
-        <input type="text" id="event" placeholder="Evento" required>
-        <input type="text" id="modal-location" placeholder="Localização" required>
-        <input type="text" id="modal-time" placeholder="Hora" required>
-        <input type="text" id="modal-required-actions" placeholder="Ações Necessárias">
-        <input type="text" id="modal-attendees" placeholder="Participantes">
-        <!-- Adicione outros campos obrigatórios aqui, se houver -->
-        <button class="save" onclick="saveEvent()">Salvar</button>
-        <button class="close" onclick="closeModal()">Fechar</button>
+        <h2 id="modal-title">Add/Edit Event</h2>
+        <input type="text" id="event" placeholder="Event" required>
+        <input type="text" id="modal-location" placeholder="Location" required>
+        <input type="text" id="modal-time" placeholder="Time" required>
+        <input type="text" id="modal-required-actions" placeholder="Required Actions">
+        <input type="text" id="modal-attendees" placeholder="Attendees">
+        <button class="save" onclick="saveEvent()">Save</button>
+        <button class="close" onclick="closeModal()">Close</button>
     </div>
 </div>
 
 <script>
-    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; // Substitua pelo seu API Key
+    const API_KEY = 'YOUR_API_KEY_HERE'; // Substitua pelo seu API Key
     const BASE_ID = 'appQyrlfslEfiTHya'; // Substitua pelo seu Base ID
     const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Substitua pelo seu Table Name
 
     let currentEventId = null;
-    let selectedMonth = 0; // Janeiro (0)
-    let selectedDay = 1; // Dia 1
+    let selectedMonth = 0; // January (0)
+    let selectedDay = 1; // Day 1
 
     // Função para calcular o dia da semana de início de cada mês em 2025
     function getStartDay(year, month) {
         const date = new Date(year, month, 1);
-        return date.getDay(); // 0 = Domingo, 6 = Sábado
+        return date.getDay(); // 0 = Sunday, 6 = Saturday
     }
 
     // Array de meses com nome e número de dias
     const months = [
-        { name: "Janeiro", days: 31 },
-        { name: "Fevereiro", days: 28 }, // 2025 não é ano bissexto
-        { name: "Março", days: 31 },
-        { name: "Abril", days: 30 },
-        { name: "Maio", days: 31 },
-        { name: "Junho", days: 30 },
-        { name: "Julho", days: 31 },
-        { name: "Agosto", days: 31 },
-        { name: "Setembro", days: 30 },
-        { name: "Outubro", days: 31 },
-        { name: "Novembro", days: 30 },
-        { name: "Dezembro", days: 31 }
+        { name: "January", days: 31 },
+        { name: "February", days: 28 }, // 2025 is not a leap year
+        { name: "March", days: 31 },
+        { name: "April", days: 30 },
+        { name: "May", days: 31 },
+        { name: "June", days: 30 },
+        { name: "July", days: 31 },
+        { name: "August", days: 31 },
+        { name: "September", days: 30 },
+        { name: "October", days: 31 },
+        { name: "November", days: 30 },
+        { name: "December", days: 31 }
     ];
 
-    const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     async function fetchEvents() {
         try {
@@ -172,26 +171,28 @@
                 }
             });
             if (!response.ok) {
-                throw new Error(`Erro HTTP! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            console.log('Data received from Airtable:', data);
             return data.records.map(record => {
-                const date = new Date(record.fields.Date);
+                const dateStr = record.fields.Date; // MM/DD/YYYY
+                const [month, day, year] = dateStr.split('/');
                 return {
                     id: record.id,
-                    title: record.fields["Event"],               // Atualizado para "Event"
-                    location: record.fields["Location"],         // Atualizado para "Location"
-                    time: record.fields["Time"],                 // Atualizado para "Time"
-                    requiredActions: record.fields["Required Actions"], // Atualizado para "Required Actions"
-                    attendees: record.fields["Attendees"],       // Atualizado para "Attendees"
-                    date: date,
-                    day: date.getDate(),
-                    month: date.getMonth() // 0-11 para janeiro-dezembro
+                    title: record.fields["Event"],
+                    location: record.fields["Location"],
+                    time: record.fields["Time"],
+                    requiredActions: record.fields["Required Actions"],
+                    attendees: record.fields["Attendees"],
+                    date: dateStr,
+                    day: parseInt(day),
+                    month: parseInt(month) - 1 // 0-11 for January-December
                 };
             });
         } catch (error) {
-            console.error('Erro ao buscar eventos:', error);
-            alert('Erro ao buscar eventos. Verifique o console para mais detalhes.');
+            console.error('Error fetching events:', error);
+            alert('Error fetching events. Check the console for more details.');
             return [];
         }
     }
@@ -199,7 +200,7 @@
     async function createCalendar() {
         const events = await fetchEvents();
         const calendar = document.getElementById("calendar");
-        calendar.innerHTML = ''; // Limpa o calendário antes de reconstruí-lo
+        calendar.innerHTML = ''; // Clear the calendar before rebuilding
 
         months.forEach((month, monthIndex) => {
             const monthDiv = document.createElement('div');
@@ -221,9 +222,9 @@
             const daysDiv = document.createElement('div');
             daysDiv.className = 'days';
 
-            const startDay = getStartDay(2025, monthIndex); // Dia da semana em que o mês começa
+            const startDay = getStartDay(2025, monthIndex); // Day of the week the month starts
 
-            // Adiciona os dias vazios antes do primeiro dia do mês
+            // Add empty days before the first day of the month
             for (let i = 0; i < startDay; i++) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'empty';
@@ -238,8 +239,8 @@
                 if (event) {
                     dayDiv.classList.add('event');
                     dayDiv.onclick = () => {
-                        currentEventId = event.id; // Armazena o ID do evento atual
-                        document.getElementById("modal-title").textContent = "Editar Evento";
+                        currentEventId = event.id; // Store the current event ID
+                        document.getElementById("modal-title").textContent = "Edit Event";
                         document.getElementById("event").value = event.title;
                         document.getElementById("modal-location").value = event.location;
                         document.getElementById("modal-time").value = event.time;
@@ -251,8 +252,8 @@
                     };
                 } else {
                     dayDiv.onclick = () => {
-                        currentEventId = null; // Reset para novo evento
-                        document.getElementById("modal-title").textContent = "Adicionar Evento";
+                        currentEventId = null; // Reset for new event
+                        document.getElementById("modal-title").textContent = "Add Event";
                         document.getElementById("event").value = '';
                         document.getElementById("modal-location").value = '';
                         document.getElementById("modal-time").value = '';
@@ -282,45 +283,45 @@
         const time = document.getElementById("modal-time").value.trim();
         const requiredActions = document.getElementById("modal-required-actions").value.trim();
         const attendees = document.getElementById("modal-attendees").value.trim();
-        // Se houver outros campos obrigatórios, adicione-os aqui
-        // Exemplo:
+        // If there are other required fields, add them here
+        // Example:
         // const category = document.getElementById("modal-category").value.trim();
 
-        // Validação dos campos obrigatórios
-        if (!eventName || !location || !time) { // Adicione outros campos obrigatórios aqui
-            alert('Por favor, preencha os campos obrigatórios (Evento, Localização e Hora).');
+        // Validate required fields
+        if (!eventName || !location || !time) { // Add other required fields here
+            alert('Please fill in the required fields (Event, Location, and Time).');
             return;
         }
 
-        // Construir a data correta para 2025
-        const eventDate = new Date(2025, selectedMonth, selectedDay).toISOString().split('T')[0];
-        console.log('Data do Evento:', eventDate); // Verifica o formato da data
+        // Construct the date in MM/DD/YYYY format
+        const eventDate = `${String(selectedMonth + 1).padStart(2, '0')}/${String(selectedDay).padStart(2, '0')}/2025`;
+        console.log('Event Date:', eventDate); // Check the date format
 
         const eventData = {
             fields: {
-                "Event": eventName,                         // Atualizado para "Event"
+                "Event": eventName,                         // Updated to "Event"
                 "Location": location,
                 "Time": time,
-                "Required Actions": requiredActions,         // Atualizado para "Required Actions"
+                "Required Actions": requiredActions,         // Updated to "Required Actions"
                 "Attendees": attendees,
                 "Date": eventDate
-                // Adicione outros campos obrigatórios aqui, se houver
-                // Exemplo:
-                // "Categoria": category
+                // Add other required fields here, if any
+                // Example:
+                // "Category": category
             }
         };
 
         if (currentEventId) {
-            // Atualiza um evento existente
+            // Update an existing event
             const updateData = { id: currentEventId, fields: eventData.fields };
             await updateEvent(updateData);
         } else {
-            // Adiciona um novo evento
+            // Add a new event
             await addEvent(eventData);
         }
 
         closeModal();
-        await createCalendar(); // Atualiza o calendário
+        await createCalendar(); // Update the calendar
     }
 
     async function addEvent(event) {
@@ -335,31 +336,31 @@
             });
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('Erro ao adicionar evento:', errorData);
+                console.error('Error adding event:', errorData);
                 
-                // Verifica se há mensagens de erro específicas
+                // Check for specific error messages
                 let errorMessages = '';
                 if (errorData.error) {
                     if (errorData.error.message) {
-                        errorMessages += `Mensagem: ${errorData.error.message}\n`;
+                        errorMessages += `Message: ${errorData.error.message}\n`;
                     }
                     if (errorData.error.errors && Array.isArray(errorData.error.errors)) {
                         errorData.error.errors.forEach((err, index) => {
-                            errorMessages += `Erro ${index + 1}:\nCampo: ${err.field}\nMensagem: ${err.message}\n`;
+                            errorMessages += `Error ${index + 1}:\nField: ${err.field}\nMessage: ${err.message}\n`;
                         });
                     }
                 }
                 
-                // Exibe as mensagens de erro detalhadas
-                alert(`Erro ao adicionar o evento:\n${errorMessages}`);
-                throw new Error(`Erro HTTP! status: ${response.status}`);
+                // Display detailed error messages
+                alert(`Error adding the event:\n${errorMessages}`);
+                throw new Error(`HTTP Error! status: ${response.status}`);
             }
             const responseData = await response.json();
-            console.log('Evento adicionado:', responseData);
-            alert('Evento adicionado com sucesso!');
+            console.log('Event added:', responseData);
+            alert('Event added successfully!');
         } catch (error) {
-            console.error('Erro ao adicionar evento:', error);
-            alert('Erro ao adicionar o evento. Verifique o console para mais detalhes.');
+            console.error('Error adding event:', error);
+            alert('Error adding the event. Check the console for more details.');
         }
     }
 
@@ -376,35 +377,35 @@
             });
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('Erro ao atualizar evento:', errorData);
+                console.error('Error updating event:', errorData);
                 
-                // Verifica se há mensagens de erro específicas
+                // Check for specific error messages
                 let errorMessages = '';
                 if (errorData.error) {
                     if (errorData.error.message) {
-                        errorMessages += `Mensagem: ${errorData.error.message}\n`;
+                        errorMessages += `Message: ${errorData.error.message}\n`;
                     }
                     if (errorData.error.errors && Array.isArray(errorData.error.errors)) {
                         errorData.error.errors.forEach((err, index) => {
-                            errorMessages += `Erro ${index + 1}:\nCampo: ${err.field}\nMensagem: ${err.message}\n`;
+                            errorMessages += `Error ${index + 1}:\nField: ${err.field}\nMessage: ${err.message}\n`;
                         });
                     }
                 }
                 
-                // Exibe as mensagens de erro detalhadas
-                alert(`Erro ao atualizar o evento:\n${errorMessages}`);
-                throw new Error(`Erro HTTP! status: ${response.status}`);
+                // Display detailed error messages
+                alert(`Error updating the event:\n${errorMessages}`);
+                throw new Error(`HTTP Error! status: ${response.status}`);
             }
             const responseData = await response.json();
-            console.log('Evento atualizado:', responseData);
-            alert('Evento atualizado com sucesso!');
+            console.log('Event updated:', responseData);
+            alert('Event updated successfully!');
         } catch (error) {
-            console.error('Erro ao atualizar evento:', error);
-            alert('Erro ao atualizar o evento. Verifique o console para mais detalhes.');
+            console.error('Error updating event:', error);
+            alert('Error updating the event. Check the console for more details.');
         }
     }
 
-    // Chama a função para criar o calendário ao carregar a página
+    // Call the function to create the calendar when the page loads
     window.onload = createCalendar;
 </script>
 
