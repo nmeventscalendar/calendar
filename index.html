@@ -123,6 +123,8 @@
 <div id="modal">
     <div class="modal-content">
         <h2 id="modal-title">Add/Edit Event</h2>
+        <label for="modal-event">Event:</label>
+        <input type="text" id="modal-event" placeholder="Enter event name">
         <label for="modal-location">Location:</label>
         <input type="text" id="modal-location" placeholder="Enter location">
         <label for="modal-time">Time:</label>
@@ -237,6 +239,7 @@
                     dayDiv.onclick = () => {
                         currentEventId = event.id; // Armazena o ID do evento atual
                         document.getElementById("modal-title").textContent = "Edit Event";
+                        document.getElementById("modal-event").value = event.title; // Exibe o nome do evento
                         document.getElementById("modal-location").value = event.location; 
                         document.getElementById("modal-time").value = event.time || ""; 
                         document.getElementById("modal-required-actions").value = event.requiredActions || ""; 
@@ -247,14 +250,15 @@
                     };
                 } else {
                     dayDiv.onclick = () => {
-                        currentEventId = null; // Se não houver evento, reseta o ID
+                        currentEventId = null; // Não há evento para editar
                         document.getElementById("modal-title").textContent = "Add Event";
+                        document.getElementById("modal-event").value = ""; 
                         document.getElementById("modal-location").value = ""; 
                         document.getElementById("modal-time").value = ""; 
                         document.getElementById("modal-required-actions").value = ""; 
                         document.getElementById("modal-attendees").value = ""; 
-                        document.getElementById("modal-date-start").value = formatDate(new Date(year, months.indexOf(month), day)); 
-                        document.getElementById("modal-date-end").value = formatDate(new Date(year, months.indexOf(month), day)); 
+                        document.getElementById("modal-date-start").value = formatDate(new Date(2025, months.indexOf(month), day)); 
+                        document.getElementById("modal-date-end").value = formatDate(new Date(2025, months.indexOf(month), day)); 
                         document.getElementById("modal").style.display = 'flex'; 
                     };
                 }
@@ -280,7 +284,7 @@
 
         const updatedData = {
             fields: {
-                Event: document.getElementById("modal-title").textContent === "Edit Event" ? document.getElementById("modal-title").textContent : "New Event",
+                Event: document.getElementById("modal-event").value, // Nome do evento
                 Location: document.getElementById("modal-location").value,
                 Time: document.getElementById("modal-time").value,
                 Required_Actions: document.getElementById("modal-required-actions").value,
@@ -318,7 +322,7 @@
         for (let d = startDate; d <= endDate; d.setDate(d.getDate() + 1)) {
             const newEvent = {
                 fields: {
-                    Event: document.getElementById("modal-title").textContent === "Add Event" ? "New Event" : document.getElementById("modal-title").textContent,
+                    Event: document.getElementById("modal-event").value, // Nome do evento
                     Location: document.getElementById("modal-location").value,
                     Time: document.getElementById("modal-time").value,
                     Required_Actions: document.getElementById("modal-required-actions").value,
