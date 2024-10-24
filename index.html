@@ -103,29 +103,15 @@
         .close:hover {
             background-color: #d32f2f;
         }
-        
-        .add-event-button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .add-event-button:hover {
-            background-color: #45a049;
-        }
     </style>
 </head>
 <body>
 
 <h1>Calendar 2025</h1>
-<button class="add-event-button" onclick="openAddEventModal()">Add Event</button>
+
 <div id="calendar"></div>
 
-<!-- Modal Structure for Event Details -->
+<!-- Modal Structure -->
 <div id="modal">
     <div class="modal-content">
         <h2 id="modal-title"></h2>
@@ -134,17 +120,25 @@
     </div>
 </div>
 
-<!-- Modal Structure for Adding New Event -->
+<!-- Modal para Adicionar Evento -->
 <div id="add-event-modal">
     <div class="modal-content">
         <h2>Add New Event</h2>
-        <input type="text" id="event-title" placeholder="Event Title" required>
-        <input type="text" id="event-location" placeholder="Location" required>
-        <input type="date" id="event-date" required>
+        <label for="event-title">Event Title:</label>
+        <input type="text" id="event-title" required>
+        <br>
+        <label for="event-location">Location:</label>
+        <input type="text" id="event-location" required>
+        <br>
+        <label for="event-date">Date (mm/dd/yyyy):</label>
+        <input type="text" id="event-date" required>
+        <br>
         <button onclick="addEvent()">Add Event</button>
         <button class="close" onclick="closeAddEventModal()">Close</button>
     </div>
 </div>
+
+<button id="add-event-button" onclick="openAddEventModal()">Add Event</button>
 
 <script>
     const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; 
@@ -179,47 +173,6 @@
         }
     }
 
-    async function addEvent() {
-        const title = document.getElementById("event-title").value;
-        const location = document.getElementById("event-location").value;
-        const date = document.getElementById("event-date").value;
-
-        if (!title || !location || !date) {
-            alert("Please fill in all fields.");
-            return;
-        }
-
-        const newEvent = {
-            fields: {
-                Event: title,
-                Location: location,
-                Date: date
-            }
-        };
-
-        try {
-            const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newEvent)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Added event:', data);
-            closeAddEventModal();
-            createCalendar(); // Recreate the calendar to include the new event
-        } catch (error) {
-            console.error('Error adding event:', error);
-        }
-    }
-
     const months = [
         { name: "January", days: 31, startDay: 4 },
         { name: "February", days: 28, startDay: 7 },
@@ -238,89 +191,121 @@
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     async function createCalendar() {
-    const events = await fetchEvents();
-    const calendar = document.getElementById("calendar");
-    calendar.innerHTML = ''; // Limpa o conteúdo existente
+        const events = await fetchEvents();
+        const calendar = document.getElementById("calendar");
+        calendar.innerHTML = ''; // Limpa o calendário antes de recriá-lo
 
-    months.forEach((month) => {
-        const monthDiv = document.createElement('div');
-        monthDiv.className = 'month';
+        months.forEach((month) => {
+            const monthDiv = document.createElement('div');
+            monthDiv.className = 'month';
 
-        const monthHeader = document.createElement('h2');
-        monthHeader.textContent = month.name;
-        monthDiv.appendChild(monthHeader);
+            const monthHeader = document.createElement('h2');
+            monthHeader.textContent = month.name;
+            monthDiv.appendChild(monthHeader);
 
-        const weekdaysDiv = document.createElement('div');
-        weekdaysDiv.className = 'weekdays';
-        weekdays.forEach(day => {
-            const dayDiv = document.createElement('div');
-            dayDiv.textContent = day;
-            weekdaysDiv.appendChild(dayDiv);
-        });
-        monthDiv.appendChild(weekdaysDiv);
+            const weekdaysDiv = document.createElement('div');
+            weekdaysDiv.className = 'weekdays';
+            weekdays.forEach(day => {
+                const dayDiv = document.createElement('div');
+                dayDiv.textContent = day;
+                weekdaysDiv.appendChild(dayDiv);
+            });
+            monthDiv.appendChild(weekdaysDiv);
 
-        const daysDiv = document.createElement('div');
-        daysDiv.className = 'days';
+            const daysDiv = document.createElement('div');
+            daysDiv.className = 'days';
 
-        // Adiciona espaços vazios antes do primeiro dia do mês
-        for (let i = 0; i < month.startDay - 1; i++) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.className = 'empty';
-            daysDiv.appendChild(emptyDiv);
-        }
-
-        // Adiciona os dias do mês
-        for (let day = 1; day <= month.days; day++) {
-            const dayDiv = document.createElement('div');
-            dayDiv.textContent = day;
-
-            // Verifica se há um evento para o dia
-            const event = events.find(e => e.day === day && e.month === months.indexOf(month));
-            if (event) {
-                dayDiv.classList.add('event');
-                dayDiv.onclick = () => {
-                    document.getElementById("modal-title").textContent = event.title;
-                    document.getElementById("modal-location").textContent = `Location: ${event.location}`;
-                    document.getElementById("modal").style.display = 'flex'; // Exibe o modal
-                };
+            for (let i = 0; i < month.startDay - 1; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty';
+                daysDiv.appendChild(emptyDiv);
             }
 
-            daysDiv.appendChild(dayDiv);
+            for (let day = 1; day <= month.days; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.textContent = day;
+
+                const event = events.find(e => e.day === day && e.month === months.indexOf(month));
+                if (event) {
+                    dayDiv.classList.add('event');
+                    dayDiv.onclick = () => {
+                        document.getElementById("modal-title").textContent = event.title;
+                        document.getElementById("modal-location").textContent = `Location: ${event.location}`;
+                        document.getElementById("modal").style.display = 'flex'; 
+                    };
+                }
+
+                daysDiv.appendChild(dayDiv);
+            }
+
+            monthDiv.appendChild(daysDiv);
+            calendar.appendChild(monthDiv);
+        });
+    }
+
+    async function addEvent() {
+        const title = document.getElementById('event-title').value;
+        const location = document.getElementById('event-location').value;
+        const date = document.getElementById('event-date').value;
+
+        // Valida a data
+        if (!title || !location || !date) {
+            alert('Please fill in all fields.');
+            return;
         }
 
-        monthDiv.appendChild(daysDiv);
-        calendar.appendChild(monthDiv);
-    });
-}
+        const formattedDate = new Date(date);
+        const data = {
+            fields: {
+                Event: title,
+                Location: location,
+                Date: formattedDate.toISOString().split('T')[0] // Formato YYYY-MM-DD
+            }
+        };
 
-function closeModal() {
-    document.getElementById("modal").style.display = 'none'; 
-}
+        try {
+            const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
 
-function openAddEventModal() {
-    document.getElementById("add-event-modal").style.display = 'flex';
-}
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-function closeAddEventModal() {
-    document.getElementById("add-event-modal").style.display = 'none';
-}
-
-// Fecha o modal ao clicar fora dele
-document.addEventListener('click', (event) => {
-    const modal = document.getElementById("modal");
-    const addEventModal = document.getElementById("add-event-modal");
-    if (modal.style.display === 'flex' && !modal.contains(event.target)) {
-        closeModal();
+            alert('Event added successfully!');
+            closeAddEventModal();
+            createCalendar(); // Atualiza o calendário
+        } catch (error) {
+            console.error('Error adding event:', error);
+        }
     }
-    if (addEventModal.style.display === 'flex' && !addEventModal.contains(event.target)) {
-        closeAddEventModal();
+
+    function openModal() {
+        document.getElementById("modal").style.display = 'flex';
     }
-});
 
-// Inicializa o calendário
-createCalendar();
+    function closeModal() {
+        document.getElementById("modal").style.display = 'none';
+    }
 
+    function openAddEventModal() {
+        document.getElementById("add-event-modal").style.display = 'flex';
+    }
+
+    function closeAddEventModal() {
+        document.getElementById("add-event-modal").style.display = 'none';
+        document.getElementById('event-title').value = '';
+        document.getElementById('event-location').value = '';
+        document.getElementById('event-date').value = '';
+    }
+
+    // Inicializa o calendário ao carregar a página
+    window.onload = createCalendar;
 </script>
-
 </body>
 </html>
