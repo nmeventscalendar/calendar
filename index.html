@@ -56,6 +56,7 @@
             background-color: #eee;
             border-radius: 5px;
             font-size: 10px;
+            cursor: pointer;
         }
 
         .days div.empty {
@@ -64,7 +65,6 @@
 
         .days div.event {
             background-color: orange;
-            cursor: pointer;
         }
 
         /* Modal Styles */
@@ -116,6 +116,7 @@
     <div class="modal-content">
         <h2 id="modal-title"></h2>
         <p id="modal-location"></p>
+        <p id="modal-date"></p>
         <button class="close" onclick="closeModal()">Close</button>
     </div>
 </div>
@@ -229,8 +230,10 @@
                 if (event) {
                     dayDiv.classList.add('event');
                     dayDiv.onclick = () => {
+                        // Exibir detalhes do evento no modal
                         document.getElementById("modal-title").textContent = event.title;
                         document.getElementById("modal-location").textContent = `Location: ${event.location}`;
+                        document.getElementById("modal-date").textContent = `Date: ${event.date.toLocaleDateString()}`;
                         document.getElementById("modal").style.display = 'flex'; 
                     };
                 }
