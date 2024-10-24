@@ -103,23 +103,29 @@
         .close:hover {
             background-color: #d32f2f;
         }
+        
+        .add-event-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-        /* Style for the add event form */
-        .add-event-form {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 10px;
+        .add-event-button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
 
 <h1>Calendar 2025</h1>
-
+<button class="add-event-button" onclick="openAddEventModal()">Add Event</button>
 <div id="calendar"></div>
 
-<!-- Modal Structure -->
+<!-- Modal Structure for Event Details -->
 <div id="modal">
     <div class="modal-content">
         <h2 id="modal-title"></h2>
@@ -128,21 +134,17 @@
     </div>
 </div>
 
-<!-- Add Event Modal -->
+<!-- Modal Structure for Adding New Event -->
 <div id="add-event-modal">
     <div class="modal-content">
         <h2>Add New Event</h2>
-        <form class="add-event-form" onsubmit="addEvent(event)">
-            <input type="text" id="event-title" placeholder="Event Title" required>
-            <input type="text" id="event-location" placeholder="Location" required>
-            <input type="date" id="event-date" required>
-            <button type="submit">Add Event</button>
-        </form>
+        <input type="text" id="event-title" placeholder="Event Title" required>
+        <input type="text" id="event-location" placeholder="Location" required>
+        <input type="date" id="event-date" required>
+        <button onclick="addEvent()">Add Event</button>
         <button class="close" onclick="closeAddEventModal()">Close</button>
     </div>
 </div>
-
-<button onclick="openAddEventModal()">Add Event</button>
 
 <script>
     const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; 
@@ -160,10 +162,11 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            console.log('Fetched events:', data.records);
             return data.records.map(record => {
                 const date = new Date(record.fields.Date);
                 return {
-                    title: record.fields.Event,
+                    title: record.fields.Event, 
                     location: record.fields.Location,
                     date: date,
                     day: date.getDate(),
@@ -176,12 +179,23 @@
         }
     }
 
-    async function addEvent(event) {
-        event.preventDefault(); // Prevent form submission
+    async function addEvent() {
+        const title = document.getElementById("event-title").value;
+        const location = document.getElementById("event-location").value;
+        const date = document.getElementById("event-date").value;
 
-        const title = document.getElementById('event-title').value;
-        const location = document.getElementById('event-location').value;
-        const date = new Date(document.getElementById('event-date').value);
+        if (!title || !location || !date) {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+        const newEvent = {
+            fields: {
+                Event: title,
+                Location: location,
+                Date: date
+            }
+        };
 
         try {
             const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
@@ -190,23 +204,17 @@
                     Authorization: `Bearer ${API_KEY}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    fields: {
-                        Event: title,
-                        Location: location,
-                        Date: date.toISOString().split('T')[0] // Send date in yyyy-mm-dd format
-                    }
-                })
+                body: JSON.stringify(newEvent)
             });
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            document.getElementById('event-title').value = '';
-            document.getElementById('event-location').value = '';
-            document.getElementById('event-date').value = '';
+            const data = await response.json();
+            console.log('Added event:', data);
             closeAddEventModal();
-            createCalendar(); // Refresh calendar to show new event
+            createCalendar(); // Recreate the calendar to include the new event
         } catch (error) {
             console.error('Error adding event:', error);
         }
@@ -232,7 +240,7 @@
     async function createCalendar() {
         const events = await fetchEvents();
         const calendar = document.getElementById("calendar");
-        calendar.innerHTML = ''; // Clear previous calendar
+        calendar.innerHTML = ''; // Clear existing calendar content
 
         months.forEach((month) => {
             const monthDiv = document.createElement('div');
@@ -261,7 +269,7 @@
             }
 
             for (let day = 1; day <= month.days; day++) {
-                                const dayDiv = document.createElement('div');
+                const dayDiv = document.createElement('div');
                 dayDiv.textContent = day;
 
                 const event = events.find(e => e.day === day && e.month === months.indexOf(month));
@@ -297,7 +305,7 @@
     document.addEventListener('click', (event) => {
         const modal = document.getElementById("modal");
         const addEventModal = document.getElementById("add-event-modal");
-        if (modal.style.display === 'flex' && !modal.contains(event.target) && !event.target.closest('.event')) {
+        if (modal.style.display === 'flex' && !modal.contains(event.target)) {
             closeModal(); // Fecha o modal ao clicar fora
         }
         if (addEventModal.style.display === 'flex' && !addEventModal.contains(event.target)) {
@@ -310,4 +318,3 @@
 
 </body>
 </html>
-
