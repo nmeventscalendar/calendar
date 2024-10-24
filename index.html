@@ -59,6 +59,7 @@
             font-size: 14px;
             min-height: 40px;
             position: relative;
+            overflow: hidden;
         }
 
         .days div.empty {
@@ -69,6 +70,15 @@
         .days div.event {
             background-color: orange;
             cursor: pointer;
+        }
+
+        .event-indicator {
+            background-color: #ff9800;
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            margin: 2px;
         }
 
         /* Modal Styles */
@@ -90,7 +100,7 @@
             padding: 20px;
             border-radius: 5px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
             text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
@@ -108,6 +118,40 @@
         .close:hover, .save:hover {
             background-color: #45a049;
         }
+
+        .event-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .event-item button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .edit-button {
+            background-color: #2196F3; /* Blue */
+            color: white;
+        }
+
+        .view-button {
+            background-color: #FFC107; /* Amber */
+            color: white;
+        }
+
+        .edit-button:hover {
+            background-color: #1976D2;
+        }
+
+        .view-button:hover {
+            background-color: #FFA000;
+        }
     </style>
 </head>
 <body>
@@ -118,15 +162,8 @@
 
 <!-- Modal Structure -->
 <div id="modal">
-    <div class="modal-content">
-        <h2 id="modal-title">Add/Edit Event</h2>
-        <input type="text" id="event" placeholder="Event" required>
-        <input type="text" id="modal-location" placeholder="Location" required>
-        <input type="text" id="modal-time" placeholder="Time" required>
-        <input type="text" id="modal-required-actions" placeholder="Required Actions">
-        <input type="text" id="modal-attendees" placeholder="Attendees">
-        <button class="save" onclick="saveEvent()">Save</button>
-        <button class="close" onclick="closeModal()">Close</button>
+    <div class="modal-content" id="modal-content">
+        <!-- Content will be injected dynamically -->
     </div>
 </div>
 
@@ -235,31 +272,32 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.textContent = day;
 
-                const event = events.find(e => e.day === day && e.month === monthIndex);
-                if (event) {
+                const dayEvents = events.filter(e => e.day === day && e.month === monthIndex);
+                if (dayEvents.length > 0) {
                     dayDiv.classList.add('event');
+
+                    // Display indicators for each event
+                    dayEvents.forEach(() => {
+                        const indicator = document.createElement('span');
+                        indicator.className = 'event-indicator';
+                        dayDiv.appendChild(indicator);
+                    });
+
                     dayDiv.onclick = () => {
-                        currentEventId = event.id; // Store the current event ID
-                        document.getElementById("modal-title").textContent = "Edit Event";
-                        document.getElementById("event").value = event.title;
-                        document.getElementById("modal-location").value = event.location;
-                        document.getElementById("modal-time").value = event.time;
-                        document.getElementById("modal-required-actions").value = event.requiredActions || '';
-                        document.getElementById("modal-attendees").value = event.attendees || '';
-                        document.getElementById("modal").style.display = 'flex';
+                        if (dayEvents.length === 1) {
+                            // Single event, open edit modal
+                            openEditEventModal(dayEvents[0]);
+                        } else {
+                            // Multiple events, open selection modal
+                            openEventListModal(dayEvents);
+                        }
                         selectedMonth = monthIndex;
                         selectedDay = day;
                     };
                 } else {
                     dayDiv.onclick = () => {
                         currentEventId = null; // Reset for new event
-                        document.getElementById("modal-title").textContent = "Add Event";
-                        document.getElementById("event").value = '';
-                        document.getElementById("modal-location").value = '';
-                        document.getElementById("modal-time").value = '';
-                        document.getElementById("modal-required-actions").value = '';
-                        document.getElementById("modal-attendees").value = '';
-                        document.getElementById("modal").style.display = 'flex';
+                        openAddEventModal();
                         selectedMonth = monthIndex;
                         selectedDay = day;
                     };
@@ -275,6 +313,93 @@
 
     function closeModal() {
         document.getElementById("modal").style.display = 'none';
+    }
+
+    function openAddEventModal() {
+        const modalContent = document.getElementById("modal-content");
+        modalContent.innerHTML = `
+            <h2 id="modal-title">Add Event</h2>
+            <input type="text" id="event" placeholder="Event" required>
+            <input type="text" id="modal-location" placeholder="Location" required>
+            <input type="text" id="modal-time" placeholder="Time" required>
+            <input type="text" id="modal-required-actions" placeholder="Required Actions">
+            <input type="text" id="modal-attendees" placeholder="Attendees">
+            <button class="save" onclick="saveEvent()">Save</button>
+            <button class="close" onclick="closeModal()">Close</button>
+        `;
+        document.getElementById("modal").style.display = 'flex';
+    }
+
+    function openEditEventModal(event) {
+        currentEventId = event.id;
+        const modalContent = document.getElementById("modal-content");
+        modalContent.innerHTML = `
+            <h2 id="modal-title">Edit Event</h2>
+            <input type="text" id="event" placeholder="Event" value="${event.title}" required>
+            <input type="text" id="modal-location" placeholder="Location" value="${event.location}" required>
+            <input type="text" id="modal-time" placeholder="Time" value="${event.time}" required>
+            <input type="text" id="modal-required-actions" placeholder="Required Actions" value="${event.requiredActions || ''}">
+            <input type="text" id="modal-attendees" placeholder="Attendees" value="${event.attendees || ''}">
+            <button class="save" onclick="saveEvent()">Save</button>
+            <button class="close" onclick="closeModal()">Close</button>
+        `;
+        document.getElementById("modal").style.display = 'flex';
+    }
+
+    function openEventListModal(events) {
+        const modalContent = document.getElementById("modal-content");
+        let eventsHTML = `<h2>Events on ${events[0].date}</h2>`;
+        events.forEach(event => {
+            eventsHTML += `
+                <div class="event-item">
+                    <strong>${event.title}</strong><br>
+                    ${event.time} at ${event.location}<br>
+                    <button class="view-button" onclick="viewEvent('${event.id}')">View</button>
+                    <button class="edit-button" onclick="editEvent('${event.id}')">Edit</button>
+                </div>
+            `;
+        });
+        eventsHTML += `
+            <button class="close" onclick="closeModal()">Close</button>
+        `;
+        modalContent.innerHTML = eventsHTML;
+        document.getElementById("modal").style.display = 'flex';
+    }
+
+    function viewEvent(eventId) {
+        // Fetch the specific event data
+        fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}/${eventId}`, {
+            headers: {
+                Authorization: `Bearer ${API_KEY}`
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(record => {
+            const event = {
+                id: record.id,
+                title: record.fields["Event"],
+                location: record.fields["Location"],
+                time: record.fields["Time"],
+                requiredActions: record.fields["Required Actions"],
+                attendees: record.fields["Attendees"],
+                date: record.fields.Date
+            };
+            openEditEventModal(event);
+        })
+        .catch(error => {
+            console.error('Error fetching event details:', error);
+            alert('Error fetching event details. Check the console for more details.');
+        });
+    }
+
+    function editEvent(eventId) {
+        // Similar to viewEvent, but can implement different behavior if needed
+        viewEvent(eventId);
     }
 
     async function saveEvent() {
