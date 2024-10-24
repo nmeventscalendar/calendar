@@ -133,10 +133,7 @@
         <input type="text" id="modal-required-actions" placeholder="Enter required actions">
         <label for="modal-attendees">Attendees:</label>
         <input type="text" id="modal-attendees" placeholder="Enter attendees">
-        <label for="modal-date-start">Start Date:</label>
-        <input type="text" id="modal-date-start" placeholder="MM/DD/YYYY">
-        <label for="modal-date-end">End Date:</label>
-        <input type="text" id="modal-date-end" placeholder="MM/DD/YYYY">
+        <input type="hidden" id="modal-date">
         <button class="add" onclick="addEvent()">Add Event</button>
         <button class="save" onclick="editEvent()">Save Changes</button>
         <button class="close" onclick="closeModal()">Close</button>
@@ -149,6 +146,7 @@
     const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Substitua pelo seu Table Name
 
     let currentEventId = null;
+    let currentEventDate = null;
 
     async function fetchEvents() {
         try {
@@ -234,35 +232,33 @@
                 dayDiv.textContent = day;
 
                 const event = events.find(e => e.day === day && e.month === months.indexOf(month));
-                if (event) {
-                    dayDiv.classList.add('event');
-                    dayDiv.onclick = () => {
+                dayDiv.onclick = () => {
+                    currentEventDate = new Date(2025, months.indexOf(month), day); // Define a data do evento atual
+                    if (event) {
                         currentEventId = event.id; // Armazena o ID do evento atual
                         document.getElementById("modal-title").textContent = "Edit Event";
-                        document.getElementById("modal-event").value = event.title; // Exibe o nome do evento
-                        document.getElementById("modal-location").value = event.location; 
+                        document.getElementById("modal-event").value = event.title || ""; // Exibe o nome do evento
+                        document.getElementById("modal-location").value = event.location || ""; 
                         document.getElementById("modal-time").value = event.time || ""; 
                         document.getElementById("modal-required-actions").value = event.requiredActions || ""; 
                         document.getElementById("modal-attendees").value = event.attendees || ""; 
-                        document.getElementById("modal-date-start").value = formatDate(event.date); 
-                        document.getElementById("modal-date-end").value = formatDate(event.date); 
-                        document.getElementById("modal").style.display = 'flex'; 
-                    };
-                } else {
-                    dayDiv.onclick = () => {
-                        currentEventId = null; // Não há evento para editar
+                    } else {
+                        currentEventId = null; // Não há evento atual
                         document.getElementById("modal-title").textContent = "Add Event";
-                        document.getElementById("modal-event").value = ""; 
+                        document.getElementById("modal-event").value = ""; // Limpa o campo de evento
                         document.getElementById("modal-location").value = ""; 
-                        document.getElementById("modal-time").value = ""; 
+                                                document.getElementById("modal-time").value = ""; 
                         document.getElementById("modal-required-actions").value = ""; 
                         document.getElementById("modal-attendees").value = ""; 
-                        document.getElementById("modal-date-start").value = formatDate(new Date(2025, months.indexOf(month), day)); 
-                        document.getElementById("modal-date-end").value = formatDate(new Date(2025, months.indexOf(month), day)); 
-                        document.getElementById("modal").style.display = 'flex'; 
-                    };
-                }
+                    }
+                    document.getElementById("modal-date").value = currentEventDate.toISOString().split('T')[0]; // Define a data para o campo oculto
+                    openModal();
+                };
 
+                if (event) {
+                    dayDiv.classList.add('event'); // Adiciona classe de evento se existir
+                }
+                
                 daysDiv.appendChild(dayDiv);
             }
             monthDiv.appendChild(daysDiv);
@@ -270,92 +266,109 @@
         });
     }
 
-    function formatDate(date) {
-        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-        return date.toLocaleDateString('en-US', options);
+    function openModal() {
+        document.getElementById("modal").style.display = "flex";
     }
 
     function closeModal() {
-        document.getElementById("modal").style.display = 'none';
+        document.getElementById("modal").style.display = "none";
+    }
+
+    async function addEvent() {
+        const eventName = document.getElementById("modal-event").value;
+        const location = document.getElementById("modal-location").value;
+        const time = document.getElementById("modal-time").value;
+        const requiredActions = document.getElementById("modal-required-actions").value;
+        const attendees = document.getElementById("modal-attendees").value;
+
+        if (eventName) {
+            const newEvent = {
+                fields: {
+                    Event: eventName,
+                    Location: location,
+                    Time: time,
+                    Required_Actions: requiredActions,
+                    Attendees: attendees,
+                    Date: document.getElementById("modal-date").value,
+                }
+            };
+
+            await saveEvent(newEvent);
+            closeModal();
+            createCalendar(); // Atualiza o calendário
+        } else {
+            alert("Please enter an event name.");
+        }
     }
 
     async function editEvent() {
-        if (!currentEventId) return; // Verifica se há um evento para editar
+        const eventName = document.getElementById("modal-event").value;
+        const location = document.getElementById("modal-location").value;
+        const time = document.getElementById("modal-time").value;
+        const requiredActions = document.getElementById("modal-required-actions").value;
+        const attendees = document.getElementById("modal-attendees").value;
 
-        const updatedData = {
-            fields: {
-                Event: document.getElementById("modal-event").value, // Nome do evento
-                Location: document.getElementById("modal-location").value,
-                Time: document.getElementById("modal-time").value,
-                Required_Actions: document.getElementById("modal-required-actions").value,
-                Attendees: document.getElementById("modal-attendees").value,
-                Date: document.getElementById("modal-date-start").value // Usa a data de início
-            }
-        };
+        if (currentEventId) {
+            const updatedEvent = {
+                id: currentEventId,
+                fields: {
+                    Event: eventName,
+                    Location: location,
+                    Time: time,
+                    Required_Actions: requiredActions,
+                    Attendees: attendees,
+                    Date: document.getElementById("modal-date").value,
+                }
+            };
 
+            await updateEvent(updatedEvent);
+            closeModal();
+            createCalendar(); // Atualiza o calendário
+        } else {
+            alert("No event selected to edit.");
+        }
+    }
+
+    async function saveEvent(event) {
         try {
-            const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}/${currentEventId}`, {
+            const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(event)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log('Event added:', await response.json());
+        } catch (error) {
+            console.error('Error saving event:', error);
+        }
+    }
+
+    async function updateEvent(event) {
+        try {
+            const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}/${event.id}`, {
                 method: 'PATCH',
                 headers: {
                     Authorization: `Bearer ${API_KEY}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(updatedData)
+                body: JSON.stringify(event)
             });
-
-            if (response.ok) {
-                closeModal();
-                createCalendar(); // Atualiza o calendário após edição
-            } else {
-                console.error('Error editing event:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            console.log('Event updated:', await response.json());
         } catch (error) {
-            console.error('Error editing event:', error);
+            console.error('Error updating event:', error);
         }
     }
 
-    async function addEvent() {
-        const startDate = new Date(document.getElementById("modal-date-start").value);
-        const endDate = new Date(document.getElementById("modal-date-end").value);
-
-        // Adiciona um evento para cada dia no intervalo
-        for (let d = startDate; d <= endDate; d.setDate(d.getDate() + 1)) {
-            const newEvent = {
-                fields: {
-                    Event: document.getElementById("modal-event").value, // Nome do evento
-                    Location: document.getElementById("modal-location").value,
-                    Time: document.getElementById("modal-time").value,
-                    Required_Actions: document.getElementById("modal-required-actions").value,
-                    Attendees: document.getElementById("modal-attendees").value,
-                    Date: formatDate(d) // Armazena a data formatada
-                }
-            };
-
-            try {
-                const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(newEvent)
-                });
-
-                if (!response.ok) {
-                    console.error('Error adding event:', response.status);
-                }
-            } catch (error) {
-                console.error('Error adding event:', error);
-            }
-        }
-
-        closeModal();
-        createCalendar(); // Atualiza o calendário após adicionar eventos
-    }
-
-    const year = 2025; // Define o ano do calendário
-    createCalendar(); // Cria o calendário ao carregar
-
+    createCalendar();
 </script>
+
 </body>
 </html>
