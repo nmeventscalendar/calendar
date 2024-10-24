@@ -238,82 +238,88 @@
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     async function createCalendar() {
-        const events = await fetchEvents();
-        const calendar = document.getElementById("calendar");
-        calendar.innerHTML = ''; // Clear existing calendar content
+    const events = await fetchEvents();
+    const calendar = document.getElementById("calendar");
+    calendar.innerHTML = ''; // Limpa o conteúdo existente
 
-        months.forEach((month) => {
-            const monthDiv = document.createElement('div');
-            monthDiv.className = 'month';
+    months.forEach((month) => {
+        const monthDiv = document.createElement('div');
+        monthDiv.className = 'month';
 
-            const monthHeader = document.createElement('h2');
-            monthHeader.textContent = month.name;
-            monthDiv.appendChild(monthHeader);
+        const monthHeader = document.createElement('h2');
+        monthHeader.textContent = month.name;
+        monthDiv.appendChild(monthHeader);
 
-            const weekdaysDiv = document.createElement('div');
-            weekdaysDiv.className = 'weekdays';
-            weekdays.forEach(day => {
-                const dayDiv = document.createElement('div');
-                dayDiv.textContent = day;
-                weekdaysDiv.appendChild(dayDiv);
-            });
-            monthDiv.appendChild(weekdaysDiv);
-
-            const daysDiv = document.createElement('div');
-            daysDiv.className = 'days';
-
-            for (let i = 0; i < month.startDay - 1; i++) {
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'empty';
-                daysDiv.appendChild(emptyDiv);
-            }
-
-            for (let day = 1; day <= month.days; day++) {
-                const dayDiv = document.createElement('div');
-                dayDiv.textContent = day;
-
-                const event = events.find(e => e.day === day && e.month === months.indexOf(month));
-                if (event) {
-                    dayDiv.classList.add('event');
-                    dayDiv.onclick = () => {
-                        document.getElementById("modal-title").textContent = event.title;
-                        document.getElementById("modal-location").textContent = `Location: ${event.location}`;
-                        document.getElementById("modal").style.display = 'flex'; 
-                    };
-                }
-
-                daysDiv.appendChild(dayDiv);
-            }
-
-            monthDiv.appendChild(daysDiv);
-            calendar.appendChild(monthDiv);
+        const weekdaysDiv = document.createElement('div');
+        weekdaysDiv.className = 'weekdays';
+        weekdays.forEach(day => {
+            const dayDiv = document.createElement('div');
+            dayDiv.textContent = day;
+            weekdaysDiv.appendChild(dayDiv);
         });
-    }
+        monthDiv.appendChild(weekdaysDiv);
 
-    function closeModal() {
-        document.getElementById("modal").style.display = 'none'; 
-    }
+        const daysDiv = document.createElement('div');
+        daysDiv.className = 'days';
 
-    function openAddEventModal() {
-        document.getElementById("add-event-modal").style.display = 'flex';
-    }
-
-    function closeAddEventModal() {
-        document.getElementById("add-event-modal").style.display = 'none';
-    }
-
-    document.addEventListener('click', (event) => {
-        const modal = document.getElementById("modal");
-        const addEventModal = document.getElementById("add-event-modal");
-        if (modal.style.display === 'flex' && !modal.contains(event.target)) {
-            closeModal(); // Fecha o modal ao clicar fora
+        // Adiciona espaços vazios antes do primeiro dia do mês
+        for (let i = 0; i < month.startDay - 1; i++) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty';
+            daysDiv.appendChild(emptyDiv);
         }
-        if (addEventModal.style.display === 'flex' && !addEventModal.contains(event.target)) {
-            closeAddEventModal(); // Fecha o modal de adicionar evento ao clicar fora
+
+        // Adiciona os dias do mês
+        for (let day = 1; day <= month.days; day++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.textContent = day;
+
+            // Verifica se há um evento para o dia
+            const event = events.find(e => e.day === day && e.month === months.indexOf(month));
+            if (event) {
+                dayDiv.classList.add('event');
+                dayDiv.onclick = () => {
+                    document.getElementById("modal-title").textContent = event.title;
+                    document.getElementById("modal-location").textContent = `Location: ${event.location}`;
+                    document.getElementById("modal").style.display = 'flex'; // Exibe o modal
+                };
+            }
+
+            daysDiv.appendChild(dayDiv);
         }
+
+        monthDiv.appendChild(daysDiv);
+        calendar.appendChild(monthDiv);
     });
+}
 
-    createCalendar();
+function closeModal() {
+    document.getElementById("modal").style.display = 'none'; 
+}
+
+function openAddEventModal() {
+    document.getElementById("add-event-modal").style.display = 'flex';
+}
+
+function closeAddEventModal() {
+    document.getElementById("add-event-modal").style.display = 'none';
+}
+
+// Fecha o modal ao clicar fora dele
+document.addEventListener('click', (event) => {
+    const modal = document.getElementById("modal");
+    const addEventModal = document.getElementById("add-event-modal");
+    if (modal.style.display === 'flex' && !modal.contains(event.target)) {
+        closeModal();
+    }
+    if (addEventModal.style.display === 'flex' && !addEventModal.contains(event.target)) {
+        closeAddEventModal();
+    }
+});
+
+// Inicializa o calendário
+createCalendar();
+
 </script>
 
 </body>
