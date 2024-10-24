@@ -132,7 +132,7 @@
 </div>
 
 <script>
-    const API_KEY = 'patoGikZDGb90vRcI.781fb030576bc3297eb4c1cc7ac63cbaa2b3bd122c06ca86e68cfec976e81bb1'; // Substitua pelo seu API Key
+    const API_KEY = 'SEU_API_KEY_AQUI'; // Substitua pelo seu API Key
     const BASE_ID = 'appQyrlfslEfiTHya'; // Substitua pelo seu Base ID
     const TABLE_NAME = 'tbl0jqeLM1Jj8b2IR'; // Substitua pelo seu Table Name
 
@@ -179,11 +179,11 @@
                 const date = new Date(record.fields.Date);
                 return {
                     id: record.id,
-                    title: record.fields.Event,
-                    location: record.fields.Location,
-                    time: record.fields.Time,
-                    requiredActions: record.fields.Required_Actions,
-                    attendees: record.fields.Attendees,
+                    title: record.fields["Event Name"],               // Atualizado para "Event Name"
+                    location: record.fields["Location"],              // Atualizado para "Location"
+                    time: record.fields["Time"],                      // Atualizado para "Time"
+                    requiredActions: record.fields["Required Actions"], // Atualizado para "Required Actions"
+                    attendees: record.fields["Attendees"],            // Atualizado para "Attendees"
                     date: date,
                     day: date.getDate(),
                     month: date.getMonth() // 0-11 para janeiro-dezembro
@@ -282,25 +282,31 @@
         const time = document.getElementById("modal-time").value.trim();
         const requiredActions = document.getElementById("modal-required-actions").value.trim();
         const attendees = document.getElementById("modal-attendees").value.trim();
+        // Se houver outros campos obrigatórios, adicione-os aqui
+        // Exemplo:
+        // const category = document.getElementById("modal-category").value.trim();
 
         // Validação dos campos obrigatórios
-        if (!eventName || !location || !time) {
+        if (!eventName || !location || !time) { // Adicione outros campos obrigatórios aqui
             alert('Por favor, preencha os campos obrigatórios (Nome do Evento, Localização e Hora).');
             return;
         }
 
         // Construir a data correta para 2025
         const eventDate = new Date(2025, selectedMonth, selectedDay).toISOString().split('T')[0];
+        console.log('Data do Evento:', eventDate); // Verifica o formato da data
 
         const eventData = {
             fields: {
-                Event: eventName,
-                Location: location,
-                Time: time,
-                Required_Actions: requiredActions,
-                Attendees: attendees,
-                Date: eventDate
+                "Event Name": eventName,                   // Atualizado para "Event Name"
+                "Location": location,
+                "Time": time,
+                "Required Actions": requiredActions,       // Atualizado para "Required Actions"
+                "Attendees": attendees,
+                "Date": eventDate
                 // Adicione outros campos obrigatórios aqui, se houver
+                // Exemplo:
+                // "Categoria": category
             }
         };
 
@@ -330,7 +336,22 @@
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Erro ao adicionar evento:', errorData);
-                alert(`Erro ao adicionar o evento: ${JSON.stringify(errorData.errors)}`);
+                
+                // Verifica se há mensagens de erro específicas
+                let errorMessages = '';
+                if (errorData.error) {
+                    if (errorData.error.message) {
+                        errorMessages += `Mensagem: ${errorData.error.message}\n`;
+                    }
+                    if (errorData.error.errors && Array.isArray(errorData.error.errors)) {
+                        errorData.error.errors.forEach((err, index) => {
+                            errorMessages += `Erro ${index + 1}:\nCampo: ${err.field}\nMensagem: ${err.message}\n`;
+                        });
+                    }
+                }
+                
+                // Exibe as mensagens de erro detalhadas
+                alert(`Erro ao adicionar o evento:\n${errorMessages}`);
                 throw new Error(`Erro HTTP! status: ${response.status}`);
             }
             const responseData = await response.json();
@@ -356,7 +377,22 @@
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Erro ao atualizar evento:', errorData);
-                alert(`Erro ao atualizar o evento: ${JSON.stringify(errorData.errors)}`);
+                
+                // Verifica se há mensagens de erro específicas
+                let errorMessages = '';
+                if (errorData.error) {
+                    if (errorData.error.message) {
+                        errorMessages += `Mensagem: ${errorData.error.message}\n`;
+                    }
+                    if (errorData.error.errors && Array.isArray(errorData.error.errors)) {
+                        errorData.error.errors.forEach((err, index) => {
+                            errorMessages += `Erro ${index + 1}:\nCampo: ${err.field}\nMensagem: ${err.message}\n`;
+                        });
+                    }
+                }
+                
+                // Exibe as mensagens de erro detalhadas
+                alert(`Erro ao atualizar o evento:\n${errorMessages}`);
                 throw new Error(`Erro HTTP! status: ${response.status}`);
             }
             const responseData = await response.json();
@@ -374,3 +410,4 @@
 
 </body>
 </html>
+
